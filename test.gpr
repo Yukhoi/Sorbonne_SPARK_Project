@@ -1,0 +1,14 @@
+project Test is
+
+   for Main use ("monotonic_tests.adb");
+
+   package Compiler is
+      for Switches ("ada") use ("-g", "-O2", "-gnata");
+   end Compiler;
+
+   package Prove is
+      for Proof_Switches ("Ada") use ("--level=2", "-j0");
+   end Prove;
+
+end Test;
+
