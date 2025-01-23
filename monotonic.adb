@@ -1,67 +1,94 @@
-with Ada.Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
+
 package body Monotonic with SPARK_Mode is
 
    function Cut (S : Int_Array) return Cut_Points is
-      -- 定义变量
-      Cut : Cut_Points (1 .. S'Length + 1); -- 初始化切点数组，大小为输入数组长度 + 1
-      Last : Positive := 1;  -- 当前 Cut 数组的最后一个位置
-      X : Positive := 1;    -- 当前段的起始位置
-      Y : Positive := 2;    -- 当前段的检查位置
-      Increasing : Boolean; -- 当前段是否递增
-      IsLastAndMonotonic : Boolean := False; -- 是否为最后一个元素
+      Cut : Cut_Points(1 .. S'Length + 1):= (others => 1 ); -- Pre-allocated array
+      Last : Positive := 1; -- Tracks the number of elements in Cut
+      X : Integer := 1;
+      Y : Integer := 2;
    begin
-      -- 如果输入数组为空，直接返回空切点数组
-      if S'Length = 0 then
-         return Cut(1 .. 1);
-      end if;
-
-      -- 初始化 Cut 数组，首个切点为 1
       Cut(Last) := 1;
-
-      -- 遍历序列，直到检查完整个数组
       while Y <= S'Length loop
-         -- 确定当前段是否递增
-         Increasing := S(X) < S(Y);
+          pragma Loop_Invariant(
+               1 <= X and X < S'Length and 
+               1 < Y and Y <= S'Length and
+               1 <= Last and 
+               Last < Cut'Length and
+               X < Y and
+               Last <= X and
 
-         -- 检查当前段的单调性
-         while Y < S'Length and then (S(Y - 1) < S(Y)) = Increasing loop
-            Y := Y + 1;
-         end loop;
+               --Prop 2
+               Cut(Cut'First) = 1 and Cut(Last) <= S'Length  and
+               --Prop 3
+               (for all I in 1..Last => 
+                  1 <= Cut(I) and Cut(I) <= S'Length ) and
+               --Prop 4
+               Cut(Last) = X and
+               (for all I in 1..Last-1 => (
+                  for all J in I+1..Last => (
+                     Cut(I) < Cut(J)
+                  )
+               )) --`and
+               --Prop 5
+               --(for all I in 1..Last-1 => (
+               --   Croissant(S(Cut(I)..Cut(I+1))) or 
+               --   Decroissant(S(Cut(I)..Cut(I+1)))
+               --))
+            );
 
-         if (Y = S'Length and (S(Y - 1) < S(Y)) = Increasing) then
-            IsLastAndMonotonic := True;
-         end if;
+           pragma Loop_Variant(Increases => Y);
+            --  pragma Loop_Variant(Increases => Last);
 
+         declare
+            Increasing : Boolean;
+         begin
+            Increasing := S(X) < S(Y);
+            while Y <= S'Length and (S(Y - 1) < S(Y)) = Increasing loop
+               Y := Y + 1;
+               if Y > S'Length then
+                  exit;
+               end if;
+               
+               pragma Loop_Variant (Increases => Y);
+               pragma Loop_Invariant(
+                  1 < Y and Y <= S'Length and Y >=Y'Loop_Entry
+               );
+            end loop;
 
-
-          -- 打印当前检查位置 Y
-          Ada.Text_IO.Put_Line("Y = " & Integer'Image(Y));
-
-         -- 当前段结束，添加切点
-         Last := Last + 1;
-          if IsLastAndMonotonic then
-            Cut(Last) := Y + 1;
-          else
+            Last := Last + 1;
             Cut(Last) := Y;
-          end if;
+        
+            X := Y;
+            Y := X + 1;
 
-         -- 更新起始位置和检查位置
-         X := Y;
-         Y := X + 1;
+         end;
       end loop;
 
-      if not IsLastAndMonotonic then
-         -- 最后一个元素不在最后一个段内，添加最后一个切点
+      if X <= S'Length then
          Last := Last + 1;
          Cut(Last) := S'Length + 1;
       end if;
 
-
-      -- 返回有效的 Cut 数组（从 1 到 Last）
-      for I in Cut'Range loop
-         Ada.Text_IO.Put_Line("Cut(" & Integer'Image(I) & ") = " & Integer'Image(Cut(I)));
-      end loop;
       return Cut(1 .. Last);
    end Cut;
 
+
+
+
+   procedure Print_Cut_Points(Cut : Cut_Points) is
+   begin
+      Put("Cut Points: (");
+      for I in Cut'Range loop
+         Put(Integer(Cut(I))); 
+         if I /= Cut'Last then
+            Put(", ");
+         end if;
+      end loop;
+      Put_Line(")");
+   end Print_Cut_Points;
+
+
 end Monotonic;
+
