@@ -26,7 +26,7 @@ package Monotonic with SPARK_Mode is
             
    ;
 
-   procedure Print_Cut_Points(Cut : Cut_Points);
+   --  procedure Print_Cut_Points(Cut : Cut_Points);
 
    function Croissant(S : Int_Array) return Boolean is
    (  if S'Length <= 1 then True

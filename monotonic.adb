@@ -8,6 +8,7 @@ package body Monotonic with SPARK_Mode is
       Last : Positive := 1; -- Tracks the number of elements in Cut
       X : Integer := 1;
       Y : Integer := 2;
+      Increasing : Boolean;
    begin
       Cut(Last) := 1;
       while Y <= S'Length loop
@@ -41,9 +42,9 @@ package body Monotonic with SPARK_Mode is
            pragma Loop_Variant(Increases => Y);
             --  pragma Loop_Variant(Increases => Last);
 
-         declare
-            Increasing : Boolean;
-         begin
+         --  declare
+         --     Increasing : Boolean;
+         
             Increasing := S(X) < S(Y);
             while Y <= S'Length and (S(Y - 1) < S(Y)) = Increasing loop
                Y := Y + 1;
@@ -62,8 +63,6 @@ package body Monotonic with SPARK_Mode is
         
             X := Y;
             Y := X + 1;
-
-         end;
       end loop;
 
       if X <= S'Length then
@@ -74,20 +73,17 @@ package body Monotonic with SPARK_Mode is
       return Cut(1 .. Last);
    end Cut;
 
-
-
-
-   procedure Print_Cut_Points(Cut : Cut_Points) is
-   begin
-      Put("Cut Points: (");
-      for I in Cut'Range loop
-         Put(Integer(Cut(I))); 
-         if I /= Cut'Last then
-            Put(", ");
-         end if;
-      end loop;
-      Put_Line(")");
-   end Print_Cut_Points;
+   --  procedure Print_Cut_Points(Cut : Cut_Points) is
+   --  begin
+   --     Put("Cut Points: (");
+   --     for I in Cut'Range loop
+   --        Put(Integer(Cut(I))); 
+   --        if I /= Cut'Last then
+   --           Put(", ");
+   --        end if;
+   --     end loop;
+   --     Put_Line(")");
+   --  end Print_Cut_Points;
 
 
 end Monotonic;
